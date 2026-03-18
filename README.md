@@ -19,6 +19,23 @@ The architecture follows a clean, modular design with separation of concerns acr
 - **Graceful API Key Rotation**: Automatic queue pooling multiple Gemini keys to transparently prevent downtime from severe rate-limits (HTTP 429).
 - **Glassmorphic UI Themes**: Smooth user-selected toggling between vibrant Light modes and beautiful, sleek Dark styling.
 
+## 🤖 AI Features Deep Dive
+
+The Custom Dashboard Builder leverages the **Google Gemini 2.5 LLM** (via the `google-genai` pip package) to provide next-generation, data-aware intelligence directly within the UI:
+
+### 1. "Why is this happening?" (Root Cause Explainer)
+One of the most powerful features is the built-in **"Why?"** button on every widget. Instead of manually digging through tables when a metric spikes or drops:
+- **How it works:** The system extracts the widget's aggregated data bounds and fetches a snapshot of the most recent raw database context (e.g., the last 100 orders).
+- **The AI Analysis:** It sends this highly targeted context to the Gemini LLM, asking it to identify causal correlations and statistically significant anomalies.
+- **The Result:** The user instantly receives a concise, 2-3 sentence explanation (e.g., *"The massive surge in revenue today is driven by three large bulk orders of MacBook Pros from San Francisco."*), completely eliminating manual anomaly hunting.
+
+### 2. Conversational Data Insights Chat
+A persistent AI sidebar acts as your personal Data Analyst. It is continuously aware of the live `CustomerOrders` database schema and recent transactions, allowing you to ask complex business questions in natural language and receive immediate, data-backed answers.
+
+### 3. AI Widget Generator & Dashboard Suggester
+- **Widget Generator:** Type *"Show me mobile vs desktop sales as a pie chart"* and the AI engine strictly formats a JSON schema that the frontend natively renders as an interactive chart.
+- **Dashboard Suggester:** Automatically builds a complete, mathematically sound 6-widget starting dashboard spanning 12 columns by analyzing the database schema.
+
 ## Architecture
 
 The system follows a layered architecture with clear separation of concerns:

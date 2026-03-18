@@ -7,7 +7,7 @@ import ConfirmDeleteModal from '../components/shared/ConfirmDeleteModal';
 import { v4 as uuidv4 } from 'uuid';
 import {
   BarChart3, LineChart, PieChart, AreaChart, ScatterChart,
-  Table2, TrendingUp, ChevronDown, ChevronRight, Save, X, GripVertical, Sparkles, Loader2
+  Table2, TrendingUp, ChevronDown, ChevronRight, Save, X, GripVertical, Sparkles, Loader2, Trash2
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useThemeStore } from '../stores/themeStore';
@@ -50,6 +50,7 @@ export default function DashboardConfigPage() {
   const [collapsedSections, setCollapsedSections] = useState({});
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGeneratingWidget, setIsGeneratingWidget] = useState(false);
+  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
 
   const handleAIGenerateWidget = async (e) => {
     e.preventDefault();
@@ -162,6 +163,12 @@ export default function DashboardConfigPage() {
       }
       setDeleteWidget(null);
     }
+  };
+
+  const handleDeleteAllWidgets = () => {
+    setWidgets([]);
+    setShowDeleteAllConfirm(false);
+    setSettingsWidget(null);
   };
 
   const handleSave = () => {
@@ -364,6 +371,21 @@ export default function DashboardConfigPage() {
             ? "bg-gray-800 border-t border-gray-700"
             : "bg-gray-200 border-t border-gray-300/50"
         )}>
+          {widgets.length > 0 && (
+            <button
+              onClick={() => setShowDeleteAllConfirm(true)}
+              className={cn(
+                "mr-auto flex items-center gap-2 px-5 py-2 text-sm font-medium rounded-xl transition-all duration-200",
+                isDarkMode
+                  ? "bg-red-900/40 text-red-400 border border-red-800 hover:bg-red-900/60 shadow-[4px_4px_8px_#1a1a1a,-4px_-4px_8px_#404040]"
+                  : "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff]"
+              )}
+              id="config-delete-all-btn"
+            >
+              <Trash2 size={16} />
+              Delete All
+            </button>
+          )}
           <button
             onClick={() => navigate('/dashboard')}
             className={cn(
@@ -423,6 +445,15 @@ export default function DashboardConfigPage() {
         title="Delete Widget"
         message="Are you sure you want to remove this widget from the dashboard?"
       />
+
+      <ConfirmDeleteModal
+        isOpen={showDeleteAllConfirm}
+        onClose={() => setShowDeleteAllConfirm(false)}
+        onConfirm={handleDeleteAllWidgets}
+        title="Delete All Widgets"
+        message="Are you sure you want to remove all widgets from the dashboard? This action cannot be undone."
+      />
     </div>
   );
 }
+
