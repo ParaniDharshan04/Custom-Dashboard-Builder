@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.core.config import get_settings
 from app.api.routes import orders, dashboard, widgets, data, auth, ai
+import os
 
 settings = get_settings()
 
@@ -33,3 +35,9 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# Mount static files for production (when frontend is built into static folder)
+static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+if os.path.exists(static_dir):
+    app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")

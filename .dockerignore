@@ -1,0 +1,38 @@
+# Environment files
+.env
+.env.*
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE
+.vscode
+.idea
+
+# Node modules (will be installed in container)
+frontend/node_modules
+frontend/dist
+
+# Python
+backend/__pycache__
+backend/.pytest_cache
+backend/venv
+backend/env
+
+# Logs
+*.log
+logs
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
