@@ -53,13 +53,6 @@ Built on clean, modular architecture with strict separation of concerns:
 
 *See the Custom Dashboard Builder in action! Watch comprehensive demo videos showcasing:*
 
-- 🎨 **AI Widget Generation** - Natural language to chart conversion
-- 🪄 **Dashboard Auto-Suggestion** - One-click layout generation  
-- 💬 **Conversational Analytics** - Chat with your data
-- 🔍 **Root Cause Analysis** - "Why is this happening?" explanations
-- 📊 **Interactive Visualizations** - All 7 widget types in action
-- 🎯 **Drag & Drop Builder** - Real-time dashboard customization
-
 </div>
 
 ---
