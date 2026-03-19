@@ -27,7 +27,7 @@ The **Custom Dashboard Builder** is an enterprise-grade business intelligence pl
 - **🧠 AI Intelligence Layer** - Auto-generates layouts, parses natural language, explains anomalies, and provides conversational insights
 - **📊 Dynamic Visualization** - 7 interactive widget types with real-time data aggregation
 - **🎨 Intuitive Design** - Drag-and-drop 12-column grid system with glassmorphic UI themes
-- **🔒 Enterprise Security** - JWT authentication, bcrypt hashing, and SQL injection prevention
+- **🔒 Enterprise Security** - Input validation, SQL injection prevention, and secure data handling
 - **⚡ High Performance** - Async architecture with connection pooling and optimized queries
 - **☁️ Cloud Ready** - Multi-platform deployment with Docker, Railway, Render, and Vercel support
 
@@ -56,7 +56,7 @@ Built on clean, modular architecture with strict separation of concerns:
 | **Migrations** | Alembic | Latest | Database schema management |
 | **Validation** | Pydantic | v2 | Data validation & serialization |
 | **AI Engine** | Google Gemini | 2.5 Flash | Natural language processing |
-| **Authentication** | JWT + Passlib | Latest | Secure token-based auth |
+| **Authentication** | Input Validation | Latest | Secure data validation |
 | **Server** | Uvicorn | Latest | ASGI web server |
 
 ### Frontend Technologies
@@ -299,7 +299,7 @@ sequenceDiagram
 | Principle | Implementation | Benefits |
 |-----------|----------------|----------|
 | **🏗️ Separation of Concerns** | Routes, Services, Models, Schemas | Clean architecture, maintainable codebase |
-| **🔒 Security First** | Strict JWT architecture, salted password hashing (`passlib`), strict input validation | Enterprise-grade security, data protection |
+| **🔒 Security First** | Strict input validation, SQL injection prevention | Enterprise-grade security, data protection |
 | **🤖 AI-Native Experience** | Integrating large language models heavily into frontend interaction components seamlessly instead of traditional modals | Intuitive user experience, natural interactions |
 | **📈 Scalability** | Abstracted service layer resolving heavily nested async tasks | High performance, concurrent processing |
 | **📱 Responsiveness First** | UI scaling beautifully to mobile sizes relying entirely on complex Tailwind grids | Universal device compatibility, modern UX |
@@ -438,7 +438,7 @@ Enterprise-grade reliability:
 
 | Category | Endpoints | Description |
 |----------|-----------|-------------|
-| **🔐 Authentication** | `/api/auth/*` | User registration, login, JWT management |
+| **🔐 Data** | `/api/data/*` | Data aggregation and analytics |
 | **📊 Dashboards** | `/api/dashboards/*` | Dashboard CRUD operations |
 | **🧩 Widgets** | `/api/widgets/*` | Widget configuration and management |
 | **📈 Data** | `/api/data/*` | Data aggregation and analytics |
@@ -461,10 +461,8 @@ erDiagram
     DASHBOARDS ||--o{ WIDGETS : contains
     USERS {
         uuid id PK
+        string name
         string email UK
-        string hashed_password
-        string first_name
-        string last_name
         datetime created_at
         boolean is_active
     }
@@ -504,7 +502,7 @@ erDiagram
 
 | Table | Purpose | Key Features |
 |-------|---------|--------------|
-| **👥 users** | User authentication and profiles | JWT token mapping, bcrypt hashing |
+| **👥 users** | User profiles and preferences | Basic user information storage |
 | **📊 dashboards** | Dashboard container metadata | JSONB layout configuration |
 | **🧩 widgets** | Widget configurations | Flexible JSONB schema, grid positioning |
 | **📋 customer_orders** | Business data for analytics | Rich product and transaction data |
@@ -521,8 +519,8 @@ erDiagram
 
 | Security Layer | Implementation | Protection Against |
 |----------------|----------------|-------------------|
-| **🔐 Authentication** | JWT tokens with RS256 signing | Unauthorized access |
-| **🔑 Password Security** | bcrypt hashing with unique salts | Password attacks |
+| **🔐 Data Protection** | Pydantic schema validation | Unauthorized access |
+| **🔑 Input Security** | Pydantic validation with type checking | Malformed data attacks |
 | **🛡️ Input Validation** | Pydantic schema validation | Malformed data |
 | **💉 SQL Injection** | SQLAlchemy AST parameter binding | Database attacks |
 | **🌐 CORS Protection** | Configurable origin restrictions | Cross-origin attacks |
@@ -532,10 +530,13 @@ erDiagram
 ### 🔧 Security Configuration
 
 ```python
-# JWT Configuration
-SECRET_KEY = "your-super-secret-key-min-32-chars"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Input Validation
+from pydantic import BaseModel, Field
+
+class OrderCreate(BaseModel):
+    product: str = Field(..., min_length=1, max_length=100)
+    quantity: int = Field(..., ge=1, le=1000)
+    unit_price: float = Field(..., ge=0.01)
 
 # CORS Configuration
 ALLOWED_ORIGINS = [
@@ -544,8 +545,9 @@ ALLOWED_ORIGINS = [
     "https://yourdomain.com"
 ]
 
-# Password Hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Database Security
+# SQLAlchemy parameter binding prevents SQL injection
+query = select(Order).where(Order.id == order_id)
 ```
 
 ---
@@ -598,7 +600,6 @@ docker build -t dashboard-builder .
 # Run with environment variables
 docker run -p 8000:8000 \
   -e DATABASE_URL="postgresql+asyncpg://user:pass@host:port/db" \
-  -e SECRET_KEY="your-secret-key" \
   dashboard-builder
 ```
 
@@ -616,7 +617,6 @@ docker run -p 8000:8000 \
 ```bash
 # Required for production
 DATABASE_URL=postgresql+asyncpg://user:pass@host:port/dbname
-SECRET_KEY=your-super-secret-key-min-32-chars
 ALLOWED_ORIGINS=https://yourdomain.com
 
 # Optional AI features
