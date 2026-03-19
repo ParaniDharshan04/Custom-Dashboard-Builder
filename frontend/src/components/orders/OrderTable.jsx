@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useOrders, useDeleteOrder } from '../../hooks/useOrders';
 import CreateOrderModal from './CreateOrderModal';
 import EditOrderModal from './EditOrderModal';
@@ -16,6 +17,32 @@ export default function OrderTable() {
   const [editOrder, setEditOrder] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(null);
+  const [menuCoords, setMenuCoords] = useState({ top: 0, right: 0 });
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleScroll = () => setMenuOpen(null);
+    window.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [menuOpen]);
+
+  const handleMenuClick = (e, id) => {
+    e.stopPropagation();
+    if (menuOpen === id) {
+      setMenuOpen(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      setMenuCoords({
+        top: rect.bottom + window.scrollY + 4,
+        right: window.innerWidth - rect.right
+      });
+      setMenuOpen(id);
+    }
+  };
 
   const handleDelete = () => {
     if (deleteId) {
@@ -92,7 +119,7 @@ export default function OrderTable() {
             ? "bg-gray-800 shadow-[6px_6px_12px_#1a1a1a,-6px_-6px_12px_#404040]"
             : "bg-gray-200 shadow-[6px_6px_12px_#bebebe,-6px_-6px_12px_#ffffff]"
         )}>
-          <div className="overflow-x-auto pb-28 rounded-2xl">
+          <div className="overflow-x-auto rounded-2xl">
             <table className="w-full text-sm">
               <thead>
                 <tr className={isDarkMode ? "bg-gray-750" : "bg-gray-300/40"}>
@@ -107,8 +134,7 @@ export default function OrderTable() {
               <tbody className={cn("divide-y", isDarkMode ? "divide-gray-700" : "divide-gray-300/30")}>
                 {orders.map((order) => (
                   <tr key={order.id} className={cn(
-                    "transition-colors duration-150 relative",
-                    menuOpen === order.id ? "z-40" : "z-0",
+                    "transition-colors duration-150",
                     isDarkMode ? "hover:bg-gray-700/50" : "hover:bg-gray-300/30"
                   )}>
                     <td className={cn("px-4 py-3 font-mono text-xs", isDarkMode ? "text-gray-500" : "text-gray-500")}>{truncateUUID(order.id)}</td>
@@ -126,7 +152,7 @@ export default function OrderTable() {
                     <td className={cn("px-4 py-3 text-xs", isDarkMode ? "text-gray-500" : "text-gray-500")}>{formatDate(order.order_date)}</td>
                     <td className="px-4 py-3">
                       <button
-                        onClick={() => setMenuOpen(menuOpen === order.id ? null : order.id)}
+                        onClick={(e) => handleMenuClick(e, order.id)}
                         className={cn(
                           "p-1.5 rounded-lg transition",
                           isDarkMode ? "hover:bg-gray-700 text-gray-500" : "hover:bg-gray-300/50 text-gray-400"
@@ -135,15 +161,18 @@ export default function OrderTable() {
                       >
                         <MoreVertical size={16} />
                       </button>
-                      {menuOpen === order.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                          <div className={cn(
-                            "absolute right-4 top-full mt-1 rounded-xl py-1 w-36 z-20",
-                            isDarkMode
-                              ? "bg-gray-800 shadow-[6px_6px_12px_#1a1a1a,-6px_-6px_12px_#404040] border border-gray-700"
-                              : "bg-gray-100 shadow-[6px_6px_12px_#bebebe,-6px_-6px_12px_#ffffff] border border-gray-200"
-                          )}>
+                      {menuOpen === order.id && createPortal(
+                        <div className="portal-root" style={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 9999 }}>
+                          <div className="fixed inset-0 z-40 cursor-default" onClick={() => setMenuOpen(null)} />
+                          <div 
+                            className={cn(
+                              "absolute py-1 w-36 z-50 rounded-xl",
+                              isDarkMode
+                                ? "bg-gray-800 shadow-[6px_6px_12px_#1a1a1a,-6px_-6px_12px_#404040] border border-gray-700"
+                                : "bg-gray-100 shadow-[6px_6px_12px_#bebebe,-6px_-6px_12px_#ffffff] border border-gray-200"
+                            )}
+                            style={{ top: menuCoords.top, right: menuCoords.right }}
+                          >
                             <button
                               onClick={() => { setEditOrder(order); setMenuOpen(null); }}
                               className={cn(
@@ -163,7 +192,8 @@ export default function OrderTable() {
                               <Trash2 size={14} /> Delete
                             </button>
                           </div>
-                        </>
+                        </div>,
+                        document.body
                       )}
                     </td>
                   </tr>
