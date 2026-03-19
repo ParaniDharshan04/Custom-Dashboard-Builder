@@ -1,46 +1,145 @@
 # Design Document: Custom Dashboard Builder
 
 ## Overview
-
 The Custom Dashboard Builder is a production-quality system that enables users to design, visualize, and monitor real-time business metrics dynamically. The system provides a complete solution for dynamic data visualization, featuring a powerful AI Intelligence Layer capable of auto-generating full layouts, parsing natural language to construct custom widgets, explaining data anomalies ("Why is this happening?"), and conversing strictly with live business orders.
 
 The architecture follows a clean, modular design with separation of concerns across presentation (React + Zustand), business logic (FastAPI), AI processing (Gemini 2.5 Flash), and data layers (PostgreSQL/Alembic), providing a highly scalable, maintainable, and production-ready enterprise application.
 
-## Key Features
-- **Interactive Dashboard Builder**: 12-column drag-and-drop grid layout using `react-grid-layout` allowing custom sizing and positioning.
-- **7 Dynamic Widget Types**: Native rendering for KPI Cards, Bar Charts, Line Charts, Area Charts, Pie Charts, Scatter Plots, and Data Tables.
-- **AI Widget Generator**: Natural Language to Chart configuration. Simply type "Show me revenue by product as a pie chart" and the widget is automatically assembled and populated with live data.
-- **AI Dashboard Suggester**: A one-click "magic wand" that architecturally crafts a beautiful 6-widget starter layout perfectly mapped to the database schema when starting from an empty canvas.
-- **AI Root Cause Explainer**: A built-in "Why?" sparkly button on every widget that instantly analyzes statistical anomalies against raw tabular context to provide immediate business-intelligence.
-- **Data Insights Chat**: A conversational Data Analyst sidebar panel trained directly on your latest Customer Orders.
-- **Live Data Aggregation Engine**: Real-time server-side processing mapping highly customizable metrics (sum, avg, count) strictly via SQLAlchemy AST mappings.
-- **Order Management CRUD**: A dedicated Data page featuring extensive pagination, editing, and deleting capabilities for raw Customer Orders.
-- **Global Time Filtering**: A synchronized control allowing instant dashboard-wide data recalculations for dynamic date ranges (e.g. 'Today', 'Last 30 Days').
-- **Graceful API Key Rotation**: Automatic queue pooling multiple Gemini keys to transparently prevent downtime from severe rate-limits (HTTP 429).
-- **Glassmorphic UI Themes**: Smooth user-selected toggling between vibrant Light modes and beautiful, sleek Dark styling.
+## Technology Stack
 
-## 🤖 AI Features Deep Dive
+### Backend
+- **Framework:** FastAPI 0.109+
+- **Database:** PostgreSQL (production ready via `asyncpg`), SQLite (dev fallback)
+- **ORM:** SQLAlchemy 2.0+ & Alembic
+- **Validation:** Pydantic v2
+- **AI:** Google Gemini API (`google-genai`)
+- **Authentication:** JWT (`python-jose`) and Password Hashing (`passlib`)
+- **Web Server:** Uvicorn
 
-The Custom Dashboard Builder leverages the **Google Gemini 2.5 LLM** (via the `google-genai` pip package) to provide next-generation, data-aware intelligence directly within the UI:
+### Frontend
+- **Framework:** React 16+ (Vite)
+- **Routing:** React Router v6
+- **Styling:** TailwindCSS (Vibrant Light & Sleek Dark modes)
+- **State Management:** Zustand & React Query (`@tanstack/react-query`)
+- **HTTP Client:** Axios
+- **Icons:** Lucide React
+- **UI/Charts:** Recharts, `react-grid-layout`
 
-### 1. "Why is this happening?" (Root Cause Explainer)
-One of the most powerful features is the built-in **"Why?"** button on every widget. Instead of manually digging through tables when a metric spikes or drops:
-- **How it works:** The system extracts the widget's aggregated data bounds and fetches a snapshot of the most recent raw database context (e.g., the last 100 orders).
-- **The AI Analysis:** It sends this highly targeted context to the Gemini LLM, asking it to identify causal correlations and statistically significant anomalies.
-- **The Result:** The user instantly receives a concise, 2-3 sentence explanation (e.g., *"The massive surge in revenue today is driven by three large bulk orders of MacBook Pros from San Francisco."*), completely eliminating manual anomaly hunting.
+## Project Structure
 
-### 2. Conversational Data Insights Chat
-A persistent AI sidebar acts as your personal Data Analyst. It is continuously aware of the live `CustomerOrders` database schema and recent transactions, allowing you to ask complex business questions in natural language and receive immediate, data-backed answers.
+```text
+Halleyx_Customerdashboard/
+├── backend/
+│   ├── alembic/              # Database migration configuration and scripts
+│   ├── app/
+│   │   ├── api/routes/       # API controllers (ai.py, auth.py, dashboard.py, data.py, orders.py, widgets.py)
+│   │   ├── core/             # App configuration, constants, and security utilities
+│   │   ├── crud/             # SQLAlchemy ORM Data Access Layer classes
+│   │   ├── db/               # Database connection strings, sessions, and Base setup
+│   │   ├── models/           # SQLAlchemy Declarative Models mapping strictly to tables
+│   │   ├── schemas/          # Pydantic validation boundaries for HTTP Requests/Responses
+│   │   └── services/         # Core Logic, Aggregations, and GenAI Integrations
+│   ├── tests/                # Pytest suites ensuring algorithmic correctness
+│   ├── requirements.txt      # pip dependency mappings (`asyncpg`, `google-genai`)
+│   ├── alembic.ini           # Alembic structural settings
+│   ├── main.py               # FastAPI application lifecycle and middleware entrypoint
+│   └── .env                  # Secret configurations (DB_URL, GEMINI_API_KEY)
+├── frontend/
+│   ├── src/
+│   │   ├── components/       
+│   │   │   ├── dashboard/    # Complex layout Canvas, Grid systems, and Tooltips
+│   │   │   ├── orders/       # Order Data Tables and transactional UI views
+│   │   │   ├── shared/       # Highly reusable atoms (Buttons, Modals, Spinners)
+│   │   │   └── widgets/      # Native re-rendering charts mapping to ReCharts
+│   │   ├── contexts/         # Context Providers replacing prop-drilling
+│   │   ├── hooks/            # Custom abstraction hooks (`useTheme`, `useAuth`)
+│   │   ├── pages/            # Top-Level Page routing views (DashboardConfig, Login)
+│   │   ├── stores/           # Modern Zustand architecture containing immutable state
+│   │   ├── lib/              # API Client instantiations with Axios HTTP Interceptors
+│   │   ├── utils/            # Math formatters, validation logic, and CSS helpers
+│   │   ├── App.jsx           # Master standard routing wrapper
+│   │   ├── main.jsx          # React DOM mounting architecture
+│   │   └── index.css         # Global PostCSS directives enabling modern Tailwind modes
+│   ├── package.json          # Node registry mapping orchestrator
+│   ├── tailwind.config.js    # Tailwind brand color tracking and typography injections
+│   └── vite.config.js        # Vite compilation and HMR performance engine
+├── Dockerfile                # Specialized Backend build layer containerization
+├── docker-compose.yml        # Local orchestration executing dependencies simultaneously
+├── render.yaml               # Cloud PaaS production declarative mapping
+├── vercel.json               # Vercel Serverless optimized routing hooks
+└── README.md                 # Primary design specifications
+```
 
-### 3. AI Widget Generator 
-- **Widget Generator:** Type *"Show me mobile vs desktop sales as a pie chart"* and the AI engine strictly formats a JSON schema that the frontend natively renders as an interactive chart.
+## Quick Start
 
-### 4.Dashboard Suggester
-- **Dashboard Suggester:** Automatically builds a complete, mathematically sound 6-widget starting dashboard spanning 12 columns by analyzing the database schema.
+### Prerequisites
+- Python 3.9+ 
+- Node.js 18+
+- PostgreSQL instance (or local SQLite)
+- Google Gemini API key
+
+### Backend Setup
+Navigate to the backend directory:
+```bash
+cd backend
+```
+
+Create and activate a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+Install application dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Configure your environment:
+```bash
+cp .env.example .env
+# Open .env and insert your database string and GEMINI_API_KEY
+```
+
+Apply migrations (optional, if using full PostgreSQL schema rules):
+```bash
+alembic upgrade head
+```
+
+Run the API:
+```bash
+uvicorn main:app --reload
+```
+The Backend operates natively at `http://localhost:8000`. API structure documentation available directly at `http://localhost:8000/docs`.
+
+### Frontend Setup
+Navigate to the frontend workspace:
+```bash
+cd frontend
+```
+
+Install node packages:
+```bash
+npm install
+```
+
+Start the Vite development engine:
+```bash
+npm run dev
+```
+The Application will boot and become available at `http://localhost:5173`.
+
+
+## Design Principles
+- **Separation of Concerns:** Routes, Services, Models, Schemas.
+- **Security First:** Strict JWT architecture, salted password hashing (`passlib`), strict input validation.
+- **AI-Native Experience:** Integrating large language models heavily into frontend interaction components seamlessly instead of traditional modals.
+- **Scalability:** Abstracted service layer resolving heavily nested async tasks.
+- **Responsiveness First:** UI scaling beautifully to mobile sizes relying entirely on complex Tailwind grids.
 
 ## Architecture
 
-The system follows a layered architecture with clear separation of concerns:
+The system follows a fundamentally layered architecture handling massive dynamic queries:
 
 ```mermaid
 graph TB
@@ -90,232 +189,88 @@ graph TB
     Models --> DB
 ```
 
-## Main Algorithm/Workflow
+## 🤖 AI Integration & Features
 
-The core AI Widget Generation and Render workflow follows this execution sequence:
+The Custom Dashboard Builder leverages **Google Gemini 2.5 LLM** natively through the `google-genai` pip distribution.
 
-```mermaid
-sequenceDiagram
-    participant Client as Frontend Client
-    participant API as REST API
-    participant AI as AI Route Layer
-    participant Gemini as Gemini 2.5 LLM
-    participant DB as Database
-    
-    Client->>API: POST /api/ai/generate-widget
-    API->>AI: generate_widget(prompt)
-    AI->>Gemini: Inject DB Schema + Task Prompt
-    Gemini-->>AI: Yield strict JSON Configuration
-    AI->>DB: Intercept and serialize Widget config
-    AI-->>Client: Return Widget Instance
-    
-    loop Dynamic Render Engine
-        Client->>API: GET /api/data/aggregate (Params = AI Config)
-        API->>DB: Execute dynamic SQLAlchemy AST
-        DB-->>API: Yield aggregated counts/sums
-        API-->>Client: Return clean label/value shapes
-        Client->>Client: Draw Chart natively on Canvas
-    end
-```
+### Core Features
+- **AI Widget Generator**: Natural Language to Chart configuration. Simply type "Show me revenue by product as a pie chart" and the widget is automatically assembled and populated with live data.
+- **Dashboard Suggester**: A one-click "magic wand" that architecturally crafts a beautiful 6-widget starter layout perfectly mapped to the database schema when starting from an empty canvas.
+- **Data Insights Chat**: A conversational Data Analyst sidebar panel. Contextually aware of live data.
+- **Root Cause Explainer ("Why is this happening?")**: Binds a "Sparkle" action to every generated widget. Captures aggregate bounds naturally to fetch recent raw rows—shipping it to the LLM to statistically analyze causal correlations without manual searches.
+- **Graceful API Key Rotation**: Automatic queue pooling multiple Gemini keys to transparently prevent downtime from severe rate-limits (HTTP 429).
+- **Interactive Dashboard Builder**: 12-column drag-and-drop grid layout using `react-grid-layout`.
+- **7 Dynamic Widget Types**: Native rendering for KPI Cards, Bar Charts, Line Charts, Area Charts, Pie Charts, Scatter Plots, and Data Tables.
+- **Order Management CRUD**: High-performance pagination with editable customer order records.
+- **Glassmorphic UI**: Beautiful vibrant colors and seamless toggling.
 
-## Components and Interfaces
+## API Documentation
+Complete Swagger documentation is immediately generated and exposed securely:
+- **Interactive docs:** http://localhost:8000/docs
+- **ReDoc:** http://localhost:8000/redoc
 
-### Component 1: AI Intelligence Layer
+## Database Schema
+Key Tables included within the project architecture:
+- `users` - Secure JWT Authentication mappings
+- `dashboards` - Bound layout container metadata
+- `widgets` - Deep JSONB schema configurations defining user views
+- `customer_orders` - Root metrics for analytics operations
 
-**Purpose**: Translates natural language and system state into rigorous database configurations and insights.
+Detailed relationships define strict Cascades ensuring child-records (such as widgets) are removed when user environments shift.
 
-**Interface**:
-```python
-class AILayer:
-    async def generate_widget(self, prompt: str) -> WidgetCreate
-    async def suggest_dashboard(self) -> DashboardCreate
-    async def explain_insight(self, widget: ExplainWidgetRequest) -> Dict[str, str]
-    async def chat_insights(self, message: str) -> Dict[str, str]
-```
+## Security Features
+- Strict JWT token-based authentication mapping HTTP headers deeply.
+- SHA-256 bcrypt password hashing with unique environment salts.
+- Pydantic bounds evaluation locking variable injection.
+- SQLAlchemy AST bindings structurally eliminating malicious SQL inputs (SQL Injection prevention).
+- React frontend sanitization strictly eliminating stored XSS issues.
+- Deep CORS configuration restricting external domain hooks.
 
-**Responsibilities**:
-- Convert human language into strict widget JSON structures (`x_axis`, `y_axis`, `metric`).
-- Provide Root Cause Explanations cross-referencing aggregate data with raw context.
-- Manage safe API key rotation when rate limits are hit.
-- Automatically position grids mathematically out into a 12-column coordinate system.
+## Analytics & Tracking
+Automatically processes live metrics natively:
+- Daily/Monthly total counts and generated Revenue aggregations
+- Multi-Dimensional Product analytics grouping
+- Live performance analysis (Order scaling volumes)
+- System interaction telemetry dynamically parsed by internal logic hooks
 
-### Component 2: Order Aggregation Engine
+## Deployment
 
-**Purpose**: Processes massive datasets dynamically according to generalized widget schemas.
+The application utilizes standardized environment builds (`Dockerfile` & `docker-compose.yml`) ensuring high interoperability strings. See platform-specific instructions via `render.yaml` and `vercel.json`.
 
-**Interface**:
-```python
-class OrderAggregationService:
-    async def get_aggregate_data(self, db: AsyncSession, metric: str, aggregation: str, date_range: str, group_by: Optional[str]) -> Dict[str, Any]
-    async def get_table_data(self, db: AsyncSession, columns: List[str], sort_by: str, sort_dir: str, page: int) -> Dict[str, Any]
-```
+**Deployment Options:**
+- Traditional remote server configurations via Ubuntu (Nginx + Systemd)
+- Docker Swarm / Container engines
+- Cloud providers (Railway, Render, Vercel, AWS ECS)
 
-**Responsibilities**:
-- Bind generic JSON configurations directly to SQLAlchemy AST objects (`func.sum`, `func.count`).
-- Safely sanitize strings against allowed `COLUMN_MAP` values avoiding SQL injection.
-- Process time-series filtering on the fly (`today`, `last_30_days`).
+## Future Enhancements
+**Phase 2**
+- Webhook pipeline ingestion
+- Native PDF Export mapping (Automated Report Generation)
+- Data Collaboration channels ("Share Dashboard via Link")
+- Custom threshold email alerts
 
-### Component 3: Dashboard Layout Engine (Frontend)
+**Phase 3**
+- Native Advanced Mobile App integration (React Native wrappers)
+- Massive scalability mappings (ClickHouse DB Migration)
+- Snowflake / Redshift analytical connectors
 
-**Purpose**: Controls the workspace DOM and bounds validation of the interactive graph matrix.
+## Scalability
+- **PostgreSQL Connection Pooling** heavily tuned for async workers (`asyncpg`).
+- **Distributed Rendering Framework** heavily delegating UI strain directly to browsers while retaining minimal API payloads.
+- Architecture strongly supports future integration paths to Redis (Caching layers) and Celery for extended asynchronous background jobs.
 
-**Interface**:
-```javascript
-export default function DashboardCanvas({ widgets, editable })
-function hasMinimalConfig(widget)
-```
+## Contributing
+This system is designed as a rigorous, modern production environment showcase. Contributions, PRs, and suggestions covering advanced analytical capabilities are deeply appreciated!
 
-**Responsibilities**:
-- Mange `react-grid-layout` bounds within responsive breakpoints (Mobile to Desktop).
-- Pre-validate widget configurations (Gatekeeping) before attempting data fetches to prevent crash chains.
-- Escalate localized `createPortal` models for tooltips and AI explainers breaking out of CSS transforms.
+## License
+Developed for enterprise software education and architectural demonstration purposes. All rights reserved.
 
-## Data Models
+## Contact
+For architectural queries or collaboration scopes:
+- Platform Maintainer Documentation: Ensure to assess the root backend models configurations directly linked inside `app/schemas` and `app/db` to view pure logic constraints.
 
-### Model 1: CustomerOrder
-
-```python
-class CustomerOrder(Base):
-    id: UUID = Field(primary_key=True)
-    first_name: str = Field(max_length=100)
-    last_name: str = Field(max_length=100)
-    product: str
-    quantity: int = Field(ge=1)
-    unit_price: Float
-    total_amount: Float
-    status: str
-    order_date: datetime
-```
-
-**Validation Rules**:
-- `total_amount` is inherently computable.
-- Product enum enforcement (e.g. "MacBook Pro 16", "iPhone 15 Pro").
-
-### Model 2: Dashboard Widget
-
-```python
-class Widget(Base):
-    id: UUID = Field(primary_key=True)
-    dashboard_id: UUID = Field(foreign_key="dashboards.id")
-    title: str = Field(max_length=255)
-    widget_type: str = Field(enum=["bar_chart", "kpi", "pie_chart", "table", "line_chart"])
-    config: JSONB = Field(default_factory=dict)
-```
-
-**Validation Rules**:
-- JSONB `config` represents extremely flexible bounds tracking metadata (`metric`, `dataKey`, `x_axis`) avoiding migrations.
-- Tied specifically to owner dashboard cascade rules.
-
-## Algorithmic Pseudocode
-
-### Dynamic Data Aggregation Algorithm
-
-```pascal
-ALGORITHM processDataAggregation(metric_name, aggregation_type, target_group)
-INPUT: metric_name of type String, aggregation_type of type String
-OUTPUT: aggregated_data of type Hashmap
-
-BEGIN
-  ASSERT metric_name IN ALLOWED_COLUMNS
-  
-  col ← ALLOWED_COLUMNS[metric_name]
-  
-  IF target_group IS NOT NULL THEN
-     group_col ← ALLOWED_COLUMNS[target_group]
-     IF aggregation_type = "sum" THEN
-        query ← SELECT group_col, SUM(col) GROUP BY group_col
-     ELSE
-        query ← SELECT group_col, COUNT(col) GROUP BY group_col
-     END IF
-  ELSE
-     // KPI Extraction
-     IF aggregation_type = "sum" THEN
-        query ← SELECT SUM(col)
-     END IF
-  END IF
-  
-  RETURN execute(query)
-END
-```
-
-**Preconditions:**
-- Metric requested exists in database schema.
-- Data requested falls within user permission space.
-
-## Key Functions with Formal Specifications
-
-### Function 1: suggest_dashboard()
-
-```python
-def suggest_dashboard(db: AsyncSession) -> DashboardCreate
-```
-
-**Preconditions:**
-- Target dashboard space is entirely empty.
-- Global schema mapping is available to feed context to the LLM.
-
-**Postconditions:**
-- Automatically spawns 6 highly targeted, distinct widgets seamlessly distributed over a 12-column layout.
-- Every widget maps flawlessly to valid fields in the `CustomerOrder` schema.
-- Mathematical constraints explicitly prohibit overlap of coordinates.
-
-### Function 2: explain_insight()
-
-```python
-def explain_insight(self, widget_title: str, widget_config: dict, raw_context: list) -> str
-```
-
-**Preconditions:**
-- Widget exists and yields data mathematically.
-- Up to 100 recent raw orders are extracted as context parameters.
-
-**Postconditions:**
-- Provides a clean, 2-3 sentence causal correlation connecting the aggregate metric with the micro events in the raw context.
-- Output strictly avoids markdown and complex syntax, returning highly readable string text.
-
-## Example Usage
-
-```python
-# Example 1: Chatting with Data
-response = ai_client.chat_insights("Which product drove the most revenue today?")
-print(response) # "The Studio Display generated $28k, making up 30% of today's drive."
-
-# Example 2: Generating a Widget from Language
-widget = ai_client.generate_widget("Show me order volume assigned by country as a pie chart")
-canvas.mount(widget) # Dynamically injects config into layout
-
-# Example 3: Finding Root Causes
-why = ai_client.explain_insight("Total Revenue", KPI_CONFIG)
-print(why) # "The massive spike in revenue is thanks to multiple identical orders from San Francisco purchasing Apple Watches."
-```
-
-## Correctness Properties
-
-*A property is a characteristic or behavior that should hold true across all valid executions of the system.*
-
-### Property 1: Rendering Sandboxing Consistency
-*For any* widget possessing corrupted or missing layout configuration (`chart_data`, `x_axis`), the framework gracefully interrupts the canvas draw cycle, yielding a fallback UI ("Click icon to configure") rather than crashing the hierarchy.
-
-### Property 2: Widget Math Alignment Constraint
-*For any* AI suggested layout grid, `X` position coordinates combined with `W` width constraints strictly evaluate `<= 12` ensuring mathematical CSS grid validity.
-
-### Property 3: Resilient Tool Rotations
-*For any* LLM generation command executing during a high-usage peak, the system autonomously intercepts HTTP 429 Rate Limits and hot-swaps active API keys without the user realizing a failure occurred. 
-
-## Error Handling
-
-### Error Scenario 1: Unmapped LLM Field Value
-**Condition**: AI outputs a widget configuration with metric "Total Profit", which is not a column.
-**Response**: The Order Aggregation Service silently returns `0` arrays.
-**Recovery**: Pre-seeded Prompt enforces valid vocabulary (`total_amount`).
-
-### Error Scenario 2: Z-Index Bleed inside Grids
-**Condition**: Modals spawned inside React-Grid items become obscured by neighboring transform hierarchies.
-**Response**: Modal scales incorrectly or hides behind widgets.
-**Recovery**: `React.createPortal` routes nodes to `document.body` entirely escaping relative bounds.
-
-## Testing Strategy
-Comprehensive testing covers:
-- Safe translation of JSON models into SQLAlchemy AST objects.
-- Verification of dynamic API Rotation during aggressive rate limit thresholds.
-- Verifying the rendering pipeline gracefully handles null values natively returned by aggregations.
+## Acknowledgments
+- **Google Gemini AI** for fueling the intelligent, self-repairing UI structures and rapid generative capabilities.
+- **FastAPI** for powering pure asynchronous execution flawlessly mapping types.
+- **React & TailwindCSS** for granting rapid, beautiful visual layouts inherently.
+- **Recharts** community allowing for highly scalable native visual canvas drawings.
