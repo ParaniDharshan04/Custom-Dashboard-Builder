@@ -325,58 +325,6 @@ sequenceDiagram
 | **📈 Scalability** | Abstracted service layer resolving heavily nested async tasks | High performance, concurrent processing |
 | **📱 Responsiveness First** | UI scaling beautifully to mobile sizes relying entirely on complex Tailwind grids | Universal device compatibility, modern UX |
 
-### 🏛️ Layered Architecture
-
-The system follows a fundamentally layered architecture handling massive dynamic queries:
-
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        UI[React UI Components]
-        Builder[Dashboard Builder Engine]
-        API_Client[API Client Service]
-    end
-    
-    subgraph "API Layer"
-        REST[REST API Endpoints]
-        Validation[Pydantic Validation]
-    end
-    
-    subgraph "AI Intelligence Layer"
-        AI_Suggest[Dashboard Suggester]
-        AI_Gen[Widget Generator]
-        AI_Explain[Root Cause Explainer]
-        AI_Chat[Data Insights Chat]
-    end
-    
-    subgraph "Business Logic Layer"
-        OS[Order Aggregation Service]
-        DS[Dashboard Service]
-    end
-    
-    subgraph "Data Layer"
-        Models[SQLAlchemy Models]
-        DB[(Relational Database)]
-    end
-    
-    UI --> API_Client
-    Builder --> API_Client
-    API_Client --> REST
-    REST --> Validation
-    Validation --> OS
-    Validation --> DS
-    Validation --> AI_Suggest
-    Validation --> AI_Gen
-    Validation --> AI_Explain
-    
-    AI_Suggest --> AI_Gen
-    AI_Explain --> OS
-    OS --> Models
-    DS --> Models
-    
-    Models --> DB
-```
-
 ---
 
 ## 🤖 AI Integration & Features
