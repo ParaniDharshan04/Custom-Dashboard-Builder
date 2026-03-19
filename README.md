@@ -548,54 +548,6 @@ query = select(Order).where(Order.id == order_id)
 
 ---
 
-## 🚀 Deployment
-
-<div align="center">
-
-### Multi-Platform Cloud Deployment
-
-[![Deploy to Railway](https://railway.app/button.svg)](https://railway.app/new)
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
-
-</div>
-
-### 🐳 **Docker Deployment**
-
-```bash
-# Production build
-docker build -t dashboard-builder .
-
-# Run with environment variables
-docker run -p 8000:8000 \
-  -e DATABASE_URL="postgresql+asyncpg://user:pass@host:port/db" \
-  dashboard-builder
-```
-
-### ☁️ **Cloud Platforms**
-
-| Platform | Configuration File | Features |
-|----------|-------------------|----------|
-| **🚂 Railway** | `railway.json` | Auto-scaling, managed database |
-| **🎨 Render** | `render.yaml` | Free tier, PostgreSQL included |
-| **🟣 Heroku** | `Procfile` | Traditional PaaS, add-ons |
-| **▲ Vercel** | `vercel.json` | Serverless, edge functions |
-
-### 🔧 **Environment Variables**
-
-```bash
-# Required for production
-DATABASE_URL=postgresql+asyncpg://user:pass@host:port/dbname
-ALLOWED_ORIGINS=https://yourdomain.com
-
-# Optional AI features
-GOOGLE_API_KEY=your-google-gemini-api-key
-```
-
-📖 **Detailed deployment instructions:** [DEPLOYMENT.md](DEPLOYMENT.md)
-
----
-
 ## 🔮 Future Enhancements
 
 <div align="center">
