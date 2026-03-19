@@ -9,10 +9,10 @@ settings = get_settings()
 
 app = FastAPI(title="Custom Dashboard Builder API", version="1.0.0")
 
-# CORS - allow all origins in development
+# CORS - allow specific origins based on settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.ALLOWED_ORIGINS] if settings.ALLOWED_ORIGINS and settings.ALLOWED_ORIGINS != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

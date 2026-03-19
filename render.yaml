@@ -3,8 +3,7 @@ services:
     name: dashboard-builder
     env: python
     buildCommand: |
-      cd frontend && npm ci && npm run build &&
-      cd ../backend && pip install -r requirements.txt
+      cd backend && pip install -r requirements.txt
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
