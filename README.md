@@ -12,6 +12,8 @@
 
 *A production-quality system that enables users to design, visualize, and monitor real-time business metrics dynamically with the power of AI.*
 
+🎥 **[📹 Watch Demo Videos](https://drive.google.com/drive/folders/1A6D_Wc9uusOCNwXiL8r2QcIsueC24YWS?usp=sharing)** 🎥
+
 [🎯 Features](#-key-features) • [🚀 Quick Start](#-quick-start) • [🏗️ Architecture](#️-architecture) • [🤖 AI Features](#-ai-integration--features) • [📚 Documentation](#-api-documentation)
 
 ---
@@ -40,6 +42,25 @@ Built on clean, modular architecture with strict separation of concerns:
 - **Data Layer**: PostgreSQL with SQLAlchemy 2.0+ and Alembic migrations
 
 *Designed for scalability, maintainability, and production-ready enterprise deployment.*
+
+---
+
+## 🎬 Demo & Preview
+
+<div align="center">
+
+### 📹 **[Watch Live Demo Videos](https://drive.google.com/drive/folders/1A6D_Wc9uusOCNwXiL8r2QcIsueC24YWS?usp=sharing)**
+
+*See the Custom Dashboard Builder in action! Watch comprehensive demo videos showcasing:*
+
+- 🎨 **AI Widget Generation** - Natural language to chart conversion
+- 🪄 **Dashboard Auto-Suggestion** - One-click layout generation  
+- 💬 **Conversational Analytics** - Chat with your data
+- 🔍 **Root Cause Analysis** - "Why is this happening?" explanations
+- 📊 **Interactive Visualizations** - All 7 widget types in action
+- 🎯 **Drag & Drop Builder** - Real-time dashboard customization
+
+</div>
 
 ---
 
