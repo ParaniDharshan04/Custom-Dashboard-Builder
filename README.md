@@ -32,8 +32,10 @@ One of the most powerful features is the built-in **"Why?"** button on every wid
 ### 2. Conversational Data Insights Chat
 A persistent AI sidebar acts as your personal Data Analyst. It is continuously aware of the live `CustomerOrders` database schema and recent transactions, allowing you to ask complex business questions in natural language and receive immediate, data-backed answers.
 
-### 3. AI Widget Generator & Dashboard Suggester
+### 3. AI Widget Generator 
 - **Widget Generator:** Type *"Show me mobile vs desktop sales as a pie chart"* and the AI engine strictly formats a JSON schema that the frontend natively renders as an interactive chart.
+
+### 4.Dashboard Suggester
 - **Dashboard Suggester:** Automatically builds a complete, mathematically sound 6-widget starting dashboard spanning 12 columns by analyzing the database schema.
 
 ## Architecture
