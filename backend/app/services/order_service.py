@@ -117,6 +117,10 @@ async def get_aggregate_data(
             agg_func = func.coalesce(func.sum(cast(metric_col, Float)), 0)
         elif aggregation == "avg" and is_numeric:
             agg_func = func.coalesce(func.avg(cast(metric_col, Float)), 0)
+        elif aggregation == "min" and is_numeric:
+            agg_func = func.min(cast(metric_col, Float))
+        elif aggregation == "max" and is_numeric:
+            agg_func = func.max(cast(metric_col, Float))
         else:
             agg_func = func.count(metric_col)
 
@@ -135,6 +139,10 @@ async def get_aggregate_data(
             agg_func = func.coalesce(func.sum(cast(metric_col, Float)), 0)
         elif aggregation == "avg" and is_numeric:
             agg_func = func.coalesce(func.avg(cast(metric_col, Float)), 0)
+        elif aggregation == "min" and is_numeric:
+            agg_func = func.min(cast(metric_col, Float))
+        elif aggregation == "max" and is_numeric:
+            agg_func = func.max(cast(metric_col, Float))
         else:
             agg_func = func.count(metric_col)
 

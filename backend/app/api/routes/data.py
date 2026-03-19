@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/data", tags=["data"])
 @router.get("/aggregate")
 async def get_aggregate(
     metric: str = Query(...),
-    aggregation: str = Query("count", pattern="^(sum|avg|count)$"),
+    aggregation: str = Query("count", pattern="^(sum|avg|count|min|max)$"),
     date_range: str = Query("all", pattern="^(all|today|last_7|last_30|last_90)$"),
     group_by: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),

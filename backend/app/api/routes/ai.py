@@ -283,9 +283,11 @@ async def suggest_dashboard(db: AsyncSession = Depends(get_db)):
 
 @router.post("/chat")
 async def chat_insights(request: ChatRequest, db: AsyncSession = Depends(get_db)):
-    # Get lightweight summary of orders (limit 50 to avoid massive token bloat)
-    all_orders = await order_service.get_orders(db)
-    orders = all_orders[:50]
+    # Get lightweight summary of orders (limit 30 to avoid massive token bloat and speed up AI)
+    from sqlalchemy import select
+    from app.models.order import CustomerOrder
+    result = await db.execute(select(CustomerOrder).order_by(CustomerOrder.order_date.desc()).limit(30))
+    orders = result.scalars().all()
     
     context_data = []
     for o in orders:
@@ -325,9 +327,11 @@ async def explain_insight(request: ExplainWidgetRequest, db: AsyncSession = Depe
     except Exception as e:
         agg_data = {"error": str(e)}
 
-    # Fetch raw recent orders to get business context
-    all_orders = await order_service.get_orders(db)
-    orders = all_orders[:75]
+    # Fetch raw recent orders to get business context (limit 30 for speed)
+    from sqlalchemy import select
+    from app.models.order import CustomerOrder
+    result = await db.execute(select(CustomerOrder).order_by(CustomerOrder.order_date.desc()).limit(30))
+    orders = result.scalars().all()
     context_data = []
     for o in orders:
         context_data.append(f"Order #{o.id}: {o.product} x{o.quantity} for ${o.total_amount} ({o.status}) in {o.country}")

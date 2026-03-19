@@ -11,8 +11,20 @@ def generate_dummy_data():
     last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis"]
     cities = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego"]
     states = ["NY", "CA", "IL", "TX", "AZ", "PA", "TX", "CA"]
-    products = ["Laptop Pro", "Wireless Mouse", "Mechanical Keyboard", "Monitor 27-inch", "USB-C Hub", "Headphones"]
-    statuses = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"]
+    products = [
+        "Fiber Internet 300 Mbps",
+        "5G Unlimited Mobile Plan",
+        "Fiber Internet 1 Gbps",
+        "Business Internet 500 Mbps",
+        "VoIP Corporate Package"
+    ]
+    created_by_list = [
+        "Mr. Michael Harris",
+        "Mr. Ryan Cooper",
+        "Ms. Olivia Carter",
+        "Mr. Lucas Martin"
+    ]
+    statuses = ["Pending", "In progress", "Completed"]
     
     orders = []
     
@@ -24,12 +36,11 @@ def generate_dummy_data():
         quantity = random.randint(1, 5)
         
         unit_price = {
-            "Laptop Pro": 1299.99,
-            "Wireless Mouse": 49.99,
-            "Mechanical Keyboard": 129.99,
-            "Monitor 27-inch": 299.99,
-            "USB-C Hub": 39.99,
-            "Headphones": 199.99
+            "Fiber Internet 300 Mbps": 49.99,
+            "5G Unlimited Mobile Plan": 39.99,
+            "Fiber Internet 1 Gbps": 89.99,
+            "Business Internet 500 Mbps": 129.99,
+            "VoIP Corporate Package": 199.99
         }[product]
 
         order_date = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 24))
@@ -49,7 +60,7 @@ def generate_dummy_data():
             quantity=quantity,
             unit_price=unit_price,
             status=random.choice(statuses),
-            created_by="system_seeder",
+            created_by=random.choice(created_by_list),
             order_date=order_date,
             created_at=order_date,
             updated_at=order_date

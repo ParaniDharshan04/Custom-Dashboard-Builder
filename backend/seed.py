@@ -6,13 +6,18 @@ from app.models.order import CustomerOrder
 from sqlalchemy.ext.asyncio import AsyncSession
 
 PRODUCTS = [
-    {"name": "MacBook Pro 16", "price": 2499},
-    {"name": "iPhone 15 Pro", "price": 999},
-    {"name": "AirPods Pro", "price": 249},
-    {"name": "iPad Air", "price": 599},
-    {"name": "Apple Watch Series 9", "price": 399},
-    {"name": "Magic Keyboard", "price": 299},
-    {"name": "Studio Display", "price": 1599},
+    {"name": "Fiber Internet 300 Mbps", "price": 49.99},
+    {"name": "5G Unlimited Mobile Plan", "price": 39.99},
+    {"name": "Fiber Internet 1 Gbps", "price": 89.99},
+    {"name": "Business Internet 500 Mbps", "price": 129.99},
+    {"name": "VoIP Corporate Package", "price": 199.99},
+]
+
+CREATED_BY_LIST = [
+    "Mr. Michael Harris",
+    "Mr. Ryan Cooper",
+    "Ms. Olivia Carter",
+    "Mr. Lucas Martin",
 ]
 
 STATUSES = ["Completed", "Pending", "In progress"]
@@ -61,7 +66,7 @@ async def seed_orders():
                 unit_price=product["price"],
                 status=status,
                 country=random.choice(COUNTRIES),
-                created_by="system",
+                created_by=random.choice(CREATED_BY_LIST),
                 order_date=order_date
             )
             orders.append(order)
