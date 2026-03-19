@@ -38,6 +38,35 @@ const WIDGET_LIBRARY = [
   },
 ];
 
+const GRID_COLS = 12;
+
+/**
+ * Finds the first open (x, y) position in the 12-col grid that fits a widget
+ * of size (w x h) without overlapping any existing widget.
+ */
+function findOpenPosition(existingWidgets, w, h) {
+  const maxRow = existingWidgets.reduce(
+    (max, widget) => Math.max(max, (widget.grid_y || 0) + (widget.grid_h || 4)),
+    0
+  );
+
+  for (let y = 0; y <= maxRow; y++) {
+    for (let x = 0; x <= GRID_COLS - w; x++) {
+      const fits = !existingWidgets.some((widget) => {
+        const wx = widget.grid_x || 0;
+        const wy = widget.grid_y || 0;
+        const ww = widget.grid_w || 4;
+        const wh = widget.grid_h || 4;
+        return x < wx + ww && x + w > wx && y < wy + wh && y + h > wy;
+      });
+      if (fits) return { x, y };
+    }
+  }
+
+  // No gap found — append below all existing widgets
+  return { x: 0, y: maxRow };
+}
+
 export default function DashboardConfigPage() {
   const navigate = useNavigate();
   const { data: dashboard } = useDashboard();
@@ -59,17 +88,19 @@ export default function DashboardConfigPage() {
     setIsGeneratingWidget(true);
     try {
       const { data } = await aiApi.generateWidget(aiPrompt.trim());
-      const maxY = widgets.reduce((max, w) => Math.max(max, (w.grid_y || 0) + (w.grid_h || 4)), 0);
+      const gridW = data.grid_w || 4;
+      const gridH = data.grid_h || 4;
+      const { x: posX, y: posY } = findOpenPosition(widgets, gridW, gridH);
       const newWidget = {
         _tempId: uuidv4(),
         widget_type: data.widget_type,
         title: data.title || aiPrompt.trim(),
         description: '',
         config: data.config || {},
-        grid_x: 0,
-        grid_y: maxY,
-        grid_w: data.grid_w || 4,
-        grid_h: data.grid_h || 4,
+        grid_x: posX,
+        grid_y: posY,
+        grid_w: gridW,
+        grid_h: gridH,
       };
       setWidgets((prev) => [...prev, newWidget]);
       setAiPrompt('');
@@ -82,12 +113,30 @@ export default function DashboardConfigPage() {
 
   useEffect(() => {
     if (dashboard?.widgets) {
-      setWidgets(
-        dashboard.widgets.map((w) => ({
-          ...w,
-          _tempId: w.id || uuidv4(),
-        }))
-      );
+      // Re-place widgets that clash (e.g. all grid_x=0 from old data)
+      const placed = [];
+      const normalized = dashboard.widgets.map((w) => {
+        const gw = w.grid_w || 4;
+        const gh = w.grid_h || 4;
+        // Check if this widget overlaps any already-placed widget
+        const overlaps = placed.some((p) => {
+          const px = p.grid_x || 0, py = p.grid_y || 0;
+          const pw = p.grid_w || 4, ph = p.grid_h || 4;
+          const wx = w.grid_x || 0, wy = w.grid_y || 0;
+          return wx < px + pw && wx + gw > px && wy < py + ph && wy + gh > py;
+        });
+        let finalX = w.grid_x ?? 0;
+        let finalY = w.grid_y ?? 0;
+        if (overlaps) {
+          const pos = findOpenPosition(placed, gw, gh);
+          finalX = pos.x;
+          finalY = pos.y;
+        }
+        const fixed = { ...w, _tempId: w.id || uuidv4(), grid_x: finalX, grid_y: finalY, grid_w: gw, grid_h: gh };
+        placed.push(fixed);
+        return fixed;
+      });
+      setWidgets(normalized);
     }
   }, [dashboard]);
 

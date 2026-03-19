@@ -51,6 +51,7 @@ export default function DashboardPage() {
 
   if (!hasWidgets) {
     return (
+      <>
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="text-center">
           <div className={cn(
@@ -101,6 +102,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      <AIChatPanel />
+    </>
     );
   }
 

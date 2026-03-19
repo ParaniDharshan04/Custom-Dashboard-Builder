@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 import json
+import random
 
 from app.core.config import get_settings
 from app.core.database import get_db
@@ -119,35 +120,145 @@ async def generate_widget(request: GenerateWidgetRequest):
 
 @router.post("/suggest-dashboard")
 async def suggest_dashboard(db: AsyncSession = Depends(get_db)):
-    prompt = f"""
-    You are an AI Dashboard Suggester. The user is starting with an empty dashboard. 
-    Design a comprehensive sales overview dashboard representing Customer Orders data.
-    Provide exactly 6 distinct widgets mixing different types (kpi, bar_chart, line_chart, area_chart, pie_chart, table).
-    Be creative! Use area or line charts to plot trends over order_date, pie charts for categorizations, and tables for raw data.
-    Return ONLY a JSON array of widget objects matching the structure below.
-    [
-      {WIDGET_SCHEMA_PROMPT}
+    # --- Randomized variety pools ---
+    THEMES = [
+        {
+            "name": "Revenue Deep Dive",
+            "focus": "Focus on revenue, total sales amounts, and financial performance metrics.",
+            "kpi_metrics": ["total_amount", "unit_price", "quantity"],
+            "kpi_aggs": ["sum", "avg", "count"],
+            "chart_x": ["product", "country", "order_date"],
+            "chart_y": "total_amount",
+            "pie_field": "product",
+        },
+        {
+            "name": "Order Volume Analysis",
+            "focus": "Focus on order volumes, quantities, and order counts across dimensions.",
+            "kpi_metrics": ["quantity", "total_amount", "unit_price"],
+            "kpi_aggs": ["sum", "count", "avg"],
+            "chart_x": ["status", "country", "order_date"],
+            "chart_y": "quantity",
+            "pie_field": "status",
+        },
+        {
+            "name": "Geographic Performance",
+            "focus": "Focus on sales performance by country and region, highlighting top performing areas.",
+            "kpi_metrics": ["total_amount", "quantity", "unit_price"],
+            "kpi_aggs": ["sum", "count", "avg"],
+            "chart_x": ["country", "product", "order_date"],
+            "chart_y": "total_amount",
+            "pie_field": "country",
+        },
+        {
+            "name": "Product Performance",
+            "focus": "Focus on product-level breakdowns, bestsellers, and category comparisons.",
+            "kpi_metrics": ["total_amount", "quantity", "unit_price"],
+            "kpi_aggs": ["sum", "avg", "max"],
+            "chart_x": ["product", "status", "country"],
+            "chart_y": "quantity",
+            "pie_field": "product",
+        },
+        {
+            "name": "Operational Status Tracker",
+            "focus": "Focus on order statuses, fulfillment rates, and operational efficiency.",
+            "kpi_metrics": ["quantity", "total_amount", "unit_price"],
+            "kpi_aggs": ["count", "sum", "avg"],
+            "chart_x": ["status", "product", "country"],
+            "chart_y": "quantity",
+            "pie_field": "status",
+        },
+        {
+            "name": "Trend & Time Analysis",
+            "focus": "Focus on time-based trends, month-over-month changes, and sales evolution over order_date.",
+            "kpi_metrics": ["total_amount", "quantity", "unit_price"],
+            "kpi_aggs": ["sum", "avg", "count"],
+            "chart_x": ["order_date", "product", "country"],
+            "chart_y": "total_amount",
+            "pie_field": "country",
+        },
     ]
-    STRICT LAYOUT MATH INSTRUCTIONS FOR A 12-COLUMN GRID:
-    You MUST calculate exact `grid_x` and `grid_y` coordinates so widgets securely slot perfectly side-by-side without overlapping!
-    - Row 1 (y=0): Put 4 KPIs side-by-side. Each gets `grid_w=3`, `grid_h=3`. Their `grid_x` values must be 0, 3, 6, 9.
-    - Row 2 (y=3): Put 2 Charts side-by-side. Each gets `grid_w=6`, `grid_h=5`. Their `grid_x` values must be 0, 6.
-    - Row 3 (y=8): Put 1 wide Table. Gets `grid_w=12`, `grid_h=5`. `grid_x` must be 0.
-    Follow these exact math coordinates so the dashboard perfectly aligns into blocks!
+
+    LAYOUT_PATTERNS = [
+        {
+            "label": "4 KPIs top, 2 charts middle, 1 table bottom",
+            "instructions": (
+                "Row 1 (y=0): 4 KPI widgets side-by-side. Each: grid_w=3, grid_h=3. grid_x values: 0, 3, 6, 9.\n"
+                "Row 2 (y=3): 2 chart widgets side-by-side. Each: grid_w=6, grid_h=5. grid_x values: 0, 6.\n"
+                "Row 3 (y=8): 1 table widget spanning full width. grid_w=12, grid_h=5. grid_x=0."
+            ),
+            "counts": {"kpi": 4, "charts": 2, "table": 1},
+        },
+        {
+            "label": "3 KPIs top, 3 charts below, no table",
+            "instructions": (
+                "Row 1 (y=0): 3 KPI widgets side-by-side. Each: grid_w=4, grid_h=3. grid_x values: 0, 4, 8.\n"
+                "Row 2 (y=3): 3 chart widgets side-by-side. Each: grid_w=4, grid_h=5. grid_x values: 0, 4, 8."
+            ),
+            "counts": {"kpi": 3, "charts": 3, "table": 0},
+        },
+        {
+            "label": "2 KPIs top, 1 wide chart, 1 wide chart, 1 table",
+            "instructions": (
+                "Row 1 (y=0): 2 KPI widgets side-by-side. Each: grid_w=6, grid_h=3. grid_x values: 0, 6.\n"
+                "Row 2 (y=3): 1 wide chart. grid_w=12, grid_h=5. grid_x=0.\n"
+                "Row 3 (y=8): 1 chart on left and 1 table on right. Chart: grid_w=5, grid_h=5, grid_x=0. Table: grid_w=7, grid_h=5, grid_x=5."
+            ),
+            "counts": {"kpi": 2, "charts": 2, "table": 1},
+        },
+        {
+            "label": "3 KPIs top, 2 charts, 1 table bottom",
+            "instructions": (
+                "Row 1 (y=0): 3 KPI widgets side-by-side. Each: grid_w=4, grid_h=3. grid_x values: 0, 4, 8.\n"
+                "Row 2 (y=3): 2 charts side-by-side. Left: grid_w=7, grid_h=5, grid_x=0. Right: grid_w=5, grid_h=5, grid_x=7.\n"
+                "Row 3 (y=8): 1 table spanning full width. grid_w=12, grid_h=5. grid_x=0."
+            ),
+            "counts": {"kpi": 3, "charts": 2, "table": 1},
+        },
+    ]
+
+    CHART_TYPES = ["bar_chart", "line_chart", "pie_chart", "area_chart", "scatter_plot"]
+
+    theme = random.choice(THEMES)
+    layout = random.choice(LAYOUT_PATTERNS)
+    chart_picks = random.sample(CHART_TYPES, min(3, len(CHART_TYPES)))
+    chart_x_choices = ", ".join(random.sample(theme["chart_x"], min(len(theme["chart_x"]), 2)))
+    kpi_agg_choices = ", ".join(theme["kpi_aggs"])
+
+    prompt = f"""
+    You are an AI Dashboard Suggester. The user wants a fresh, unique dashboard for Customer Orders data.
+
+    THEME THIS TIME: "{theme["name"]}" — {theme["focus"]}
+
+    LAYOUT THIS TIME: {layout["label"]}
+    Exact widget positions:
+    {layout["instructions"]}
+
+    Return ONLY a JSON array of {sum(layout["counts"].values())} widget objects. Each widget must use this structure:
+    [{WIDGET_SCHEMA_PROMPT}]
+
+    IMPORTANT VARIETY RULES (follow closely!):
+    - KPI widgets: Use these metrics creatively: {", ".join(theme["kpi_metrics"])}. Use these aggregations: {kpi_agg_choices}. Each KPI should measure something DIFFERENT.
+    - Chart widgets: Use a creative mix of these types: {", ".join(chart_picks)}. X-axis options: {chart_x_choices}. Y-axis: {theme["chart_y"]}.
+    - Pie chart: group by "{theme["pie_field"]}" field.
+    - Table widget (if included): show raw data with columns first_name, product, total_amount, status, country.
+    - ALL widget titles must be descriptive and UNIQUE reflecting the theme "{theme["name"]}".
+    - Do NOT repeat the same widget_type+config combination.
+
+    Strictly honor the grid coordinates from the layout instructions above so widgets align without gaps or overlaps!
     """
-    
+
     response = generate_with_fallback(
         model='gemini-2.5-flash',
         contents=prompt,
         config=types.GenerateContentConfig(response_mime_type="application/json")
     )
-    
+
     try:
         widgets_data = json.loads(response.text)
-        
+
         layout_config = []
         parsed_widgets = []
-        
+
         for w in widgets_data:
             layout_config.append({
                 "i": w["title"],
@@ -157,15 +268,15 @@ async def suggest_dashboard(db: AsyncSession = Depends(get_db)):
                 "h": w.get("grid_h", 4)
             })
             parsed_widgets.append(WidgetCreate(**w))
-            
+
         dashboard_data = DashboardCreate(
-            name="AI Suggested Dashboard",
+            name=f"AI Dashboard — {theme['name']}",
             layout_config=layout_config,
             widgets=parsed_widgets
         )
-            
-        layout = await dashboard_service.save_dashboard(db, dashboard_data)
-        return {"message": "Dashboard successfully generated", "layout_id": layout.id, "widgets": parsed_widgets}
+
+        layout_obj = await dashboard_service.save_dashboard(db, dashboard_data)
+        return {"message": "Dashboard successfully generated", "layout_id": layout_obj.id, "widgets": parsed_widgets}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI Dashboard generation failed: {str(e)}")
 
